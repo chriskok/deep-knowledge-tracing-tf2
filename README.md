@@ -1,5 +1,5 @@
 # DKT+ (in Tensorflow 2)
-This is an 2021 update to the [Deep Knowledge Tracing](https://github.com/ckyeungac/deep-knowledge-tracing-plus) code by Yeung and Yeung (2018) to work with Tensorflow 2 and other new versions of necessary libraries. 
+This is a 2021 update to the [Deep Knowledge Tracing](https://github.com/ckyeungac/deep-knowledge-tracing-plus) code by Yeung and Yeung (2018) to work with Tensorflow 2 and other new versions of necessary libraries. 
 
 The code was originally developed by Yeung and Yeung for the paper *Addressing Two Problems in Deep Knowledge Tracing via Prediction-Consistent Regularization* ([ACM](https://dl.acm.org/citation.cfm?id=3231647), [pdf](https://arxiv.org/pdf/1806.02180.pdf))
 
