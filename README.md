@@ -1,5 +1,7 @@
-# DKT+
-This is the repository for the code in the paper *Addressing Two Problems in Deep Knowledge Tracing via Prediction-Consistent Regularization* ([ACM](https://dl.acm.org/citation.cfm?id=3231647), [pdf](https://arxiv.org/pdf/1806.02180.pdf))
+# DKT+ (in Tensorflow 2)
+This is an 2021 update to the [Deep Knowledge Tracing](https://github.com/ckyeungac/deep-knowledge-tracing-plus) code by Yeung and Yeung (2018) to work with Tensorflow 2 and other new versions of necessary libraries. 
+
+The code was originally developed by Yeung and Yeung for the paper *Addressing Two Problems in Deep Knowledge Tracing via Prediction-Consistent Regularization* ([ACM](https://dl.acm.org/citation.cfm?id=3231647), [pdf](https://arxiv.org/pdf/1806.02180.pdf))
 
 If you find this repository useful, please cite
 ```
@@ -16,18 +18,22 @@ If you find this repository useful, please cite
 ## Abstact
 Knowledge tracing is one of the key research areas for empowering personalized education. It is a task to model students' mastery level of a knowledge component (KC) based on their historical learning trajectories. In recent years, a recurrent neural network model called deep knowledge tracing (DKT) has been proposed to handle the knowledge tracing task and literature has shown that DKT generally outperforms traditional methods. However, through our extensive experimentation, we have noticed two major problems in the DKT model. The first problem is that the model fails to reconstruct the observed input. As a result, even when a student performs well on a KC, the prediction of that KC's mastery level decreases instead, and vice versa. Second, the predicted performance across time-steps is not consistent. This is undesirable and unreasonable because student's performance is expected to transit gradually over time. To address these problems, we introduce regularization terms that correspond to \emph{reconstruction} and \textit{waviness} to the loss function of the original DKT model to enhance the consistency in prediction. Experiments show that the regularized loss function effectively alleviates the two problems without degrading the original task of DKT.
 
-## Requirements
-I have used tensorflow to develop the deep knowledge tracing model, and the following is the packages I used:
+## Setup
+If you're using Anaconda, run `conda env create -f environment.yml`
+
+Otherwise, pip install the following:
 ```
-tensorflow==1.2.0 (or tensorflow-gpu==1.3.0)
-scikit-learn==0.18.1
-scipy==0.19.0
-numpy==1.13.3
+tensorflow==2.6.0
+scikit-learn==1.0
+scipy==1.7.1
+numpy==1.21.2
+tensorflow-addons==0.14.0
+pandas=1.3.3
+keras=2.6.0
 ```
 
 The packages used for the visualization of the student knowledge state are
 ```
-seaborn
 matplotlib
 ```
 
