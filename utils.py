@@ -176,7 +176,7 @@ class DKT(object):
         self.consistency_m2 = []
         for run_idx in range(num_runs):
             self.run_count = run_idx
-            sess.run(tf.global_variables_initializer())
+            sess.run(tf.compat.v1.global_variables_initializer())
             best_test_auc = 0.0
             best_test_auc_current = 0.0 # the auc_current when the test_auc is the best.
             best_waviness_l1 = 0.0
@@ -262,7 +262,7 @@ class DKT(object):
         save_dir = os.path.join(self.ckpt_save_dir, 'run_{}'.format(self.run_count), self.model_name)
         sess = self.sess
         # Define the tf saver
-        saver = tf.train.Saver()
+        saver = tf.compat.v1.train.Saver()
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         save_path = os.path.join(save_dir, self.model_name)
@@ -271,7 +271,7 @@ class DKT(object):
     def load_model(self):
         save_dir = os.path.join(self.ckpt_save_dir, 'run_{}'.format(self.run_count), self.model_name)
         sess = self.sess
-        saver = tf.train.Saver()
+        saver = tf.compat.v1.train.Saver()
         save_path = os.path.join(save_dir, self.model_name)
         if os.path.exists(save_path):
             saver.restore(sess=sess, save_path=save_path)

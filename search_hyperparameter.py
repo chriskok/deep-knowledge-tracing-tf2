@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+import tensorflow_addons as tfa
 import time
 import numpy as np
 from utils import DKT
@@ -48,10 +49,10 @@ num_epochs = args.num_epochs
 batch_size = args.batch_size
 
 rnn_cells = {
-    "LSTM": tf.contrib.rnn.LSTMCell,
-    "GRU": tf.contrib.rnn.GRUCell,
-    "BasicRNN": tf.contrib.rnn.BasicRNNCell,
-    "LayerNormBasicLSTM": tf.contrib.rnn.LayerNormBasicLSTMCell,
+    "LSTM": tf.compat.v1.nn.rnn_cell.LSTMCell,
+    "GRU": tf.compat.v1.nn.rnn_cell.GRUCell,
+    "BasicRNN": tf.compat.v1.nn.rnn_cell.BasicRNNCell,
+    "LayerNormBasicLSTM": tfa.rnn.LayerNormLSTMCell,
 }
 
 def loguniform(low=0.0, high=1.0, size=None):
@@ -101,9 +102,9 @@ def main(num_search=5):
                 network_config['lambda_w2'] = lambda_w2
 
                 keep_prob = network_config['keep_prob']
-                config = tf.ConfigProto()
+                config = tf.compat.v1.ConfigProto()
                 config.gpu_options.allow_growth = True
-                sess = tf.Session(config=config)
+                sess = tf.compat.v1.Session(config=config)
 
                 data = DKTData(train_path, test_path, batch_size=batch_size)
                 data_train = data.train
@@ -125,7 +126,7 @@ def main(num_search=5):
 
                 # close the session
                 sess.close()
-                tf.reset_default_graph()
+                tf.compat.v1.reset_default_graph()
         
     print("Best avg. auc:", best_avg_auc)
     print("Best network config:", best_network_config)

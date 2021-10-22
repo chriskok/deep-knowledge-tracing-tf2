@@ -8,8 +8,8 @@ def length(sequence):
     :param sequence: the batch sequence of shape [batch_size, num_steps, feature_size]
     :return length: A tensor of shape [batch_size]
     """
-    used = tf.sign(tf.reduce_max(tf.abs(sequence), 2))
-    seq_length = tf.reduce_sum(used, 1)
+    used = tf.sign(tf.reduce_max(input_tensor=tf.abs(sequence), axis=2))
+    seq_length = tf.reduce_sum(input_tensor=used, axis=1)
     seq_length = tf.cast(seq_length, tf.int32)
     return seq_length
 
@@ -21,7 +21,7 @@ class Model(object):
     def __init__(self, num_problems,
                  hidden_layer_structure=(200,),
                  batch_size=32,
-                 rnn_cell=tf.contrib.rnn.LSTMCell,
+                 rnn_cell=tf.compat.v1.nn.rnn_cell.LSTMCell,
                  learning_rate=0.01,
                  max_grad_norm=5.0,
                  lambda_w1 = 0.0,
@@ -44,10 +44,10 @@ class Model(object):
         num_problems = self.num_problems
 
         # placeholder
-        self.X = tf.placeholder(tf.float32, [None, None, 2 * num_problems], name='X')
-        self.y_seq = tf.placeholder(tf.float32, [None, None, num_problems], name='y_seq')
-        self.y_corr = tf.placeholder(tf.float32, [None, None, num_problems], name='y_corr')
-        self.keep_prob = tf.placeholder(tf.float32)
+        self.X = tf.compat.v1.placeholder(tf.float32, [None, None, 2 * num_problems], name='X')
+        self.y_seq = tf.compat.v1.placeholder(tf.float32, [None, None, num_problems], name='y_seq')
+        self.y_corr = tf.compat.v1.placeholder(tf.float32, [None, None, num_problems], name='y_corr')
+        self.keep_prob = tf.compat.v1.placeholder(tf.float32)
         self.hidden_layer_input = self.X
         self.seq_length = length(self.X)
 
@@ -61,10 +61,10 @@ class Model(object):
         hidden_layer_input = self.hidden_layer_input
         for i, layer_state_size in enumerate(hidden_layer_structure):
             variable_scope_name = "hidden_layer_{}".format(i)
-            with tf.variable_scope(variable_scope_name, reuse=tf.get_variable_scope().reuse):
+            with tf.compat.v1.variable_scope(variable_scope_name, reuse=tf.compat.v1.get_variable_scope().reuse):
                 cell = self.rnn_cell(num_units=layer_state_size)
-                cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.keep_prob)
-                outputs, state = tf.nn.dynamic_rnn(
+                cell = tf.nn.RNNCellDropoutWrapper(cell, output_keep_prob=self.keep_prob)
+                outputs, state = tf.compat.v1.nn.dynamic_rnn(
                     cell,
                     hidden_layer_input,
                     dtype=tf.float32,
@@ -80,14 +80,14 @@ class Model(object):
         last_layer_outputs = self.hidden_layers_outputs[-1]
 
         # Output Layer Construction
-        with tf.variable_scope("output_layer", reuse=tf.get_variable_scope().reuse):
-            W_yh = tf.get_variable("weights", shape=[last_layer_size, self.num_problems],
-                                   initializer=tf.random_normal_initializer(stddev=1.0 / np.sqrt(self.num_problems)))
-            b_yh = tf.get_variable("biases", shape=[self.num_problems, ],
-                                   initializer=tf.random_normal_initializer(stddev=1.0 / np.sqrt(self.num_problems)))
+        with tf.compat.v1.variable_scope("output_layer", reuse=tf.compat.v1.get_variable_scope().reuse):
+            W_yh = tf.compat.v1.get_variable("weights", shape=[last_layer_size, self.num_problems],
+                                   initializer=tf.compat.v1.random_normal_initializer(stddev=1.0 / np.sqrt(self.num_problems)), use_resource=False)
+            b_yh = tf.compat.v1.get_variable("biases", shape=[self.num_problems, ],
+                                   initializer=tf.compat.v1.random_normal_initializer(stddev=1.0 / np.sqrt(self.num_problems)), use_resource=False)
 
             # Flatten the last layer output
-            num_steps = tf.shape(last_layer_outputs)[1]
+            num_steps = tf.shape(input=last_layer_outputs)[1]
             self.outputs_flat = tf.reshape(last_layer_outputs, shape=[-1, last_layer_size])
             self.logits_flat = tf.matmul(self.outputs_flat, W_yh) + b_yh
             self.logits = tf.reshape(self.logits_flat, shape=[-1, num_steps, self.num_problems])
@@ -101,7 +101,7 @@ class Model(object):
             # Get the indices where y_seq_flat are not equal to 0, where the indices
             # implies that a student has answered the question in the time step and
             # thereby exclude those time step that the student hasn't answered.
-            target_indices = tf.where(tf.not_equal(self.y_seq, 0))
+            target_indices = tf.compat.v1.where(tf.not_equal(self.y_seq, 0))
 
             self.target_logits = tf.gather_nd(self.logits, target_indices)
             self.target_preds = tf.gather_nd(self.preds, target_indices)  # needed to return AUC
@@ -110,43 +110,43 @@ class Model(object):
             self.cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=self.target_logits,
                                                                          labels=self.target_labels)
 
-            self.loss = tf.reduce_mean(self.cross_entropy)
+            self.loss = tf.reduce_mean(input_tensor=self.cross_entropy)
 
 
             # add current performance into consideration
             current_seq = self.X[:,:,:self.num_problems] # slice out the answering exercise
             current_corr = self.X[:,:,self.num_problems:]
-            self.target_indices_current = tf.where(tf.not_equal(current_seq, 0))
+            self.target_indices_current = tf.compat.v1.where(tf.not_equal(current_seq, 0))
             self.target_logits_current = tf.gather_nd(self.logits, self.target_indices_current)
             self.target_preds_current = tf.gather_nd(self.preds, self.target_indices_current) # needed to return AUC
             self.target_labels_current = tf.gather_nd(current_corr, self.target_indices_current)
 
             self.cross_entropy_current = tf.nn.sigmoid_cross_entropy_with_logits(logits=self.target_logits_current,
                                                                                  labels=self.target_labels_current)
-            self.loss += self.lambda_o * tf.reduce_mean(self.cross_entropy_current)
+            self.loss += self.lambda_o * tf.reduce_mean(input_tensor=self.cross_entropy_current)
 
 
             # Regularize the model to smoothen the network.
             mask = length(self.y_seq)
-            self.total_num_steps = tf.reduce_sum(tf.cast(mask, tf.float32))
+            self.total_num_steps = tf.reduce_sum(input_tensor=tf.cast(mask, tf.float32))
 
             # l1-norm
             # waviness_norm_l1 = tf.norm(self.preds[:, 1:, :] - self.preds[:, :-1, :], ord=1)
             waviness_norm_l1 = tf.abs(self.preds[:, 1:, :] - self.preds[:, :-1, :])
-            self.waviness_l1 = tf.reduce_sum(waviness_norm_l1) / self.total_num_steps / self.num_problems
+            self.waviness_l1 = tf.reduce_sum(input_tensor=waviness_norm_l1) / self.total_num_steps / self.num_problems
             self.loss += self.lambda_w1 * self.waviness_l1
 
             # l2-norm
             # waviness_norm_l2 = tf.norm(self.preds[:, 1:, :] - self.preds[:, :-1, :], ord=2)
             waviness_norm_l2 = tf.square(self.preds[:, 1:, :] - self.preds[:, :-1, :])
-            self.waviness_l2 = tf.reduce_sum(waviness_norm_l2) / self.total_num_steps / self.num_problems
+            self.waviness_l2 = tf.reduce_sum(input_tensor=waviness_norm_l2) / self.total_num_steps / self.num_problems
             self.loss += self.lambda_w2 * self.waviness_l2
 
 
     def _create_optimizer(self):
         print('Create optimizer...')
-        with tf.variable_scope('Optimizer'):
-            self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+        with tf.compat.v1.variable_scope('Optimizer'):
+            self.optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate)
             gvs = self.optimizer.compute_gradients(self.loss)
             clipped_gvs = [(tf.clip_by_norm(grad, self.max_grad_norm), var) for grad, var in gvs]
             self.train_op = self.optimizer.apply_gradients(clipped_gvs)
@@ -161,4 +161,4 @@ class Model(object):
         self._create_loss()
         self._create_optimizer()
         self._add_summary()
-        tf.get_variable_scope().reuse_variables() # better to add this to reuse the variable name.
+        tf.compat.v1.get_variable_scope().reuse_variables() # better to add this to reuse the variable name.

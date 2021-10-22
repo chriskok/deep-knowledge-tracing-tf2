@@ -1,11 +1,13 @@
 import os
 import tensorflow as tf
+import tensorflow_addons as tfa
 import time
 import numpy as np
 
 from utils import DKT
 from load_data import DKTData
 
+tf.compat.v1.disable_eager_execution()
 
 """
 Assignable variables:
@@ -60,10 +62,11 @@ parser.add_argument('--dataset', type=str, default='a2009')
 args = parser.parse_args()
 
 rnn_cells = {
-    "LSTM": tf.contrib.rnn.LSTMCell,
-    "GRU": tf.contrib.rnn.GRUCell,
-    "BasicRNN": tf.contrib.rnn.BasicRNNCell,
-    "LayerNormBasicLSTM": tf.contrib.rnn.LayerNormBasicLSTMCell,
+    "LSTM": tf.compat.v1.nn.rnn_cell.LSTMCell,
+    "GRU": tf.compat.v1.nn.rnn_cell.GRUCell,
+    "BasicRNN": tf.compat.v1.nn.rnn_cell.BasicRNNCell,
+    "LayerNormBasicLSTM": tfa.rnn.LayerNormLSTMCell,
+    # "LayerNormBasicLSTM": tf.contrib.rnn.LayerNormBasicLSTMCell,
 }
 
 dataset = args.dataset
@@ -114,9 +117,9 @@ keep_prob = args.keep_prob
 
 ckpt_save_dir = args.ckpt_save_dir
 def main():
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
+    sess = tf.compat.v1.Session(config=config)
 
     data = DKTData(train_path, test_path, batch_size=batch_size)
     data_train = data.train
